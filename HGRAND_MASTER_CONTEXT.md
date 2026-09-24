@@ -20,8 +20,8 @@ This file is the source of truth for ChatGPT/Work/backend implementation. Read i
 1. Visitor chooses a plan on HGrand.
 2. Before Stripe Checkout, HGrand performs all plan configuration.
 3. Customer creates an account or logs in and supplies the identity/contact data required by HGrand (at minimum name/email; phone/profile data as required by onboarding).
-4. HGrand displays a final review showing the selected plan, first-cycle promotional charge, regular recurring charge beginning with cycle 2, billing frequency (every 4 weeks), and relevant terms.
-5. Backend validates the selected plan/variant and creates the Stripe Checkout Session using server-side authoritative pricing.
+4. HGrand displays a final review showing the selected plan, first-cycle promotional charge, regular recurring charge beginning with cycle 2, billing frequency (every 4 weeks), any valid owner-issued discount, and relevant terms.
+5. Backend validates the selected plan/variant and any submitted discount code, then creates the Stripe Checkout Session using server-side authoritative pricing.
 6. Stripe handles payment credentials/wallet/card data.
 7. Webhook/payment verification updates the HGrand account/subscription state.
 8. Only after confirmed payment does the student receive active access to the private student area.
@@ -71,6 +71,32 @@ Historical approved launch offer for the original 3x/week package: $480 for the 
 
 Promotional first-cycle prices for 1x, 2x, 4x and 5x/week have NOT yet been finalized. Do not invent them. Backend/data model must support a distinct first-cycle price per variant so these can be entered later without restructuring checkout.
 
+## Owner-controlled discount codes
+
+HGrand must support optional discount/promo codes that are created and controlled ONLY by Herlin/admin. Customers may enter a code during the pre-Checkout review/checkout flow, but they cannot create, modify, select from an admin list, or self-assign discounts.
+
+Admin/CMS should contain a private Discount Codes section where Herlin can create, enable/disable, inspect and expire codes. Each code should support controlled fields such as:
+- code/name
+- discount type: fixed USD amount or percentage
+- discount value
+- eligible plan variants (Online and/or selected in-person frequencies)
+- whether it applies to first cycle only, a defined number of cycles, or recurring cycles
+- start date / expiration date when applicable
+- maximum total redemptions when applicable
+- optional per-customer redemption limit
+- active/inactive status
+- optional internal note/reason
+
+The backend is authoritative. A customer-submitted code must be validated server-side for existence, status, eligibility, dates, redemption limits and selected plan before any discount is applied. Never let the browser calculate or submit an authoritative discounted dollar amount.
+
+The customer-facing flow should include a discreet field such as `Código de descuento` / `Promo code` near the final plan review before payment. If valid, show the original amount, discount and resulting charge clearly before redirecting to Stripe.
+
+Discount codes are separate from the automatic launch promotion. The launch offer is a pricing rule; owner-issued discount codes are discretionary. Do NOT automatically stack a discount code on top of a launch/promotional first-cycle price unless the specific code is explicitly configured by Herlin to allow stacking. Default behavior: no stacking with the launch offer.
+
+The system must remain useful after launch promotions end: Herlin can issue private codes for selected clients without changing public prices or editing the website.
+
+Where practical, map approved discounts to Stripe Coupon/Promotion Code capabilities or otherwise apply them through a controlled server-side Stripe flow. HGrand remains responsible for determining eligibility before creating Checkout. Record the discount code/discount identifier on the HGrand order/subscription record for auditability.
+
 ## Stripe/backend architecture
 
 Model each purchasable variant with an internal immutable key, e.g. ONLINE, INPERSON_1X, INPERSON_2X, INPERSON_3X, INPERSON_4X, INPERSON_5X.
@@ -84,7 +110,7 @@ For each variant store server-side:
 - whether coaching fee is included or separately represented for display
 - active/available flag
 
-The frontend sends only the selected variant key. The backend maps that key to approved Stripe objects/amounts. Do not accept client-supplied dollar amounts.
+The frontend sends only the selected variant key plus, optionally, the literal discount code entered by the customer. The backend maps the variant key to approved Stripe objects/amounts and validates the discount independently. Do not accept client-supplied dollar amounts or client-calculated discounts.
 
 Checkout should associate the Stripe Customer/Session with the HGrand user identity and internal student/user ID using the appropriate customer reference/metadata. Do not store card numbers or wallet credentials in HGrand.
 
@@ -106,8 +132,10 @@ HGrand should be able to expose a QR entry point for a selected checkout/payment
 
 `/admin` remains reserved for Herlin/CMS administration. Pricing/content management should not permit arbitrary browser-side price manipulation. Any CMS price changes that affect billing must map to controlled server-side Stripe configuration.
 
+CMS/admin should include a private `Discount Codes` management area for Herlin as described above. Customers must never have access to this management interface.
+
 ## Work implementation directive
 
-Work should treat this document as the shared master context. Before modifying checkout, Stripe, authentication, student entitlements, pricing, or backend data models, read this file and reconcile the current implementation against it. If code or older documentation conflicts with this file, do not silently choose one: preserve production safety and flag the conflict before charging real customers.
+Work should treat this document as the shared master context. Before modifying checkout, Stripe, authentication, student entitlements, pricing, discounts, or backend data models, read this file and reconcile the current implementation against it. If code or older documentation conflicts with this file, do not silently choose one: preserve production safety and flag the conflict before charging real customers.
 
-Current immediate backend objective: implement the pre-Checkout in-person frequency selector (1–5 sessions/week), server-side variant resolution, first-cycle-vs-regular recurring pricing model, Stripe Checkout customer association, webhook-confirmed activation, and the 28-day recurring billing architecture without changing the approved public-site design.
+Current immediate backend objective: implement the pre-Checkout in-person frequency selector (1–5 sessions/week), server-side variant resolution, first-cycle-vs-regular recurring pricing model, owner-controlled discount-code infrastructure, Stripe Checkout customer association, webhook-confirmed activation, and the 28-day recurring billing architecture without changing the approved public-site design.
