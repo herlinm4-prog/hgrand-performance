@@ -1,5 +1,17 @@
 # Memoria maestra — HGrand Fitness & Performance
 
+## Actualización aplicada — versión 11 publicada el 24/09/2026
+
+Esta actualización prevalece sobre las notas de estado anteriores. Publicación de Sites confirmada como succeeded; commit fuente c228feb773f9370f84222a5336d3fe354badc95d.
+
+- Se preservó el diseño y el contenido inicial aprobado; se añadieron CMS en /admin/contenido, edición de textos/precios, fotografías y testimonios en borrador/publicables con autorización y códigos de descuento con vigencia, plan y límite de uso.
+- /cuenta incluye enlace al administrador para Herlin e historial de pagos reales confirmados. Las funciones existentes de fotos privadas, PDF y chat se conservaron.
+- Checkout ampliado con validación de códigos en servidor, total explícito y aceptación de condiciones. Webhooks firmados e idempotentes y reservas atómicas de las cinco plazas y usos del código. Soporte preparado para pago único inicial, sin renovación automática.
+- Compilación y TypeScript pasaron. Pruebas locales de permisos, persistencia, descuentos, límites, aislamiento prueba/real y webhooks pasaron. Inicio y navegación al checkout revisados en navegador; el CMS autenticado no se probó visualmente con la cuenta real.
+- **Pendientes reales:** el proyecto aún no tiene STRIPE_SECRET_KEY ni STRIPE_WEBHOOK_SECRET; pagos deshabilitados. Faltan vincular Stripe, guardar condiciones, habilitar disponibilidad presencial si corresponde y probar el pago externo. El inicio de sesión propio por correo no se implementó; se conserva Sites para no romper lo existente.
+- La fuente completa está en el repositorio de Sites. Este repositorio GitHub conserva documentación; no hay sincronización automática entre ambos.
+
+
 Actualizada: 24 de septiembre de 2026. Documento de continuidad para trabajar en ChatGPT Work y en este repositorio. La fuente de verdad del sitio publicado es el proyecto de Sites indicado abajo; este repositorio aún no contiene el código completo del sitio. Leer el estado real antes de cambiar o publicar algo.
 
 ## 1. Identidad y enlaces
