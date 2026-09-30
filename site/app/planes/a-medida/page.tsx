@@ -1,0 +1,8 @@
+import type {Metadata} from 'next';
+import {Header,Footer} from '@/app/site-shell';
+import {getChatGPTUser,chatGPTSignInPath} from '@/app/chatgpt-auth';
+import CustomRequestForm from './request-form';
+import PublicCounter from './public-counter';
+export const dynamic='force-dynamic';
+export const metadata:Metadata={title:'Plan de entrenamiento a medida | HGrand Fitness & Performance',description:'Propón tus días, duración, horario y gimnasio para que Herlin revise tu plan presencial a medida.',alternates:{canonical:'/planes/a-medida'}};
+export default async function CustomPlan(){const user=await getChatGPTUser();return <><Header account={!!user}/><main className="section wrap plan-detail custom-plan"><a className="back-link" href="/#plan">← Ver todos los planes</a><div className="eyebrow">Plan a medida</div><h1>Tú propones.<br/>Yo reviso.</h1><p className="lead">Elige los días, la duración de cada entrenamiento, el horario y el gimnasio. Revisaré tu solicitud y te confirmaré la disponibilidad y el precio antes de contratar.</p><aside className="custom-coupon-callout" aria-label="Solicita un descuento"><span>Puedes solicitar un cupón</span><p>Cuando apruebe tu plan, podrás pedirme un cupón <strong>antes de pagar</strong>. Revisaré tu petición y, si la concedo, verás el descuento aplicado en el checkout.</p></aside>{user?<CustomRequestForm name={user.fullName||user.displayName}/>:<><PublicCounter/><div className="custom-signin"><h2>Prepara tu solicitud</h2><p>Accede a tu cuenta para enviarla y consultar mi respuesta desde esta página.</p><a className="btn-dark" href={chatGPTSignInPath('/planes/a-medida')} target="_top">Iniciar sesión o crear cuenta ↗</a><p>Entrar no realiza ningún cobro.</p></div></>}</main><Footer/></>}

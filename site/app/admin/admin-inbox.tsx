@@ -1,0 +1,21 @@
+'use client';
+import {useCallback,useEffect,useMemo,useState} from 'react';
+import {Input} from '@/components/ui/input';
+import ChatWidget from '@/app/chat/chat-widget';
+
+type Conversation={student_id:string;name:string;last_body:string|null;last_at:string|null;message_count:number;awaiting_reply:boolean;unread:boolean};
+export default function AdminInbox({userId}:{userId:string}){
+ const [items,setItems]=useState<Conversation[]>([]),[selected,setSelected]=useState(''),[query,setQuery]=useState(''),[onlyPending,setOnlyPending]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState('');
+ const load=useCallback(async()=>{try{const response=await fetch('/api/admin/conversaciones',{cache:'no-store'});const data=await response.json() as {conversations?:Conversation[];error?:string};if(!response.ok)throw new Error(data.error||'No se pudo cargar la bandeja.');setItems(data.conversations||[]);setSelected(current=>current||data.conversations?.[0]?.student_id||'');setError('')}catch(e){setError(e instanceof Error?e.message:'No se pudo cargar la bandeja.')}finally{setLoading(false)}},[]);
+ useEffect(()=>{const target=new URLSearchParams(window.location.search).get('student');if(target)setSelected(target);void load();const timer=setInterval(()=>{void load()},30000);return()=>clearInterval(timer)},[load]);
+ const filtered=useMemo(()=>items.filter(item=>(!onlyPending||item.awaiting_reply)&&item.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())),[items,query,onlyPending]);
+ const unreadCount=items.filter(item=>item.unread).length;
+ const pendingCount=items.filter(item=>item.awaiting_reply).length;
+ const current=filtered.find(item=>item.student_id===selected)||filtered[0];
+ return <section id="mensajes" className="admin-inbox" aria-label="Bandeja de mensajes de alumnos"><div className="admin-inbox-head"><div><div className="eyebrow">CMS / Mensajes</div><h2>Bandeja de alumnos</h2><p>{pendingCount?pendingCount+' conversación'+(pendingCount===1?' espera':'es esperan')+' tu respuesta.':'Todo respondido por ahora.'} {unreadCount} conversaciones sin leer.</p></div><button type="button" onClick={()=>void load()} disabled={loading}>Actualizar</button></div>
+ {error&&<p className="form-error" role="alert">{error}</p>}
+ <div className="admin-inbox-grid"><div className="admin-conversation-list"><label htmlFor="search-students">Buscar alumno</label><Input id="search-students" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nombre del alumno"/><div className="inbox-filters" role="group" aria-label="Filtrar conversaciones"><button type="button" aria-pressed={!onlyPending} onClick={()=>setOnlyPending(false)}>Todas ({items.length})</button><button type="button" aria-pressed={onlyPending} onClick={()=>setOnlyPending(true)}>Por responder ({pendingCount})</button></div>
+  <div className="admin-conversations">{loading&&!items.length?<p className="space-empty">Cargando alumnos…</p>:filtered.length?filtered.map(item=><button type="button" key={item.student_id} className={'admin-conversation '+(selected===item.student_id?'active':'')} onClick={()=>setSelected(item.student_id)} aria-current={selected===item.student_id?'true':undefined}><span className="admin-conversation-avatar" aria-hidden="true">{item.name.slice(0,1).toUpperCase()}</span><span className="admin-conversation-info"><strong>{item.name}</strong><small>{item.last_body||'Sin mensajes todavía'}</small>{item.unread&&<span className="inbox-pending">Sin leer</span>}{item.awaiting_reply&&<span className="inbox-pending">Esperando respuesta</span>}</span>{item.last_at&&<time dateTime={item.last_at}>{new Date(item.last_at).toLocaleDateString('es-US',{month:'short',day:'numeric'})}</time>}</button>):<p className="space-empty">{onlyPending?'No hay conversaciones pendientes.':'No hay alumnos con ese nombre.'}</p>}</div></div>
+  <div className="admin-inbox-detail">{current?<ChatWidget key={current.student_id} userId={userId} studentId={current.student_id} studentName={current.name} mode="panel" onSent={()=>void load()}/>:<p className="space-empty">{onlyPending?'No hay conversaciones pendientes.':'Selecciona un alumno para abrir su conversación.'}</p>}</div></div>
+ </section>
+}

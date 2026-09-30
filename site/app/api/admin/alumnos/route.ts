@@ -1,0 +1,28 @@
+import {getChatGPTUser} from '@/app/chatgpt-auth';
+import {database,isCoach} from '@/lib/student-space';
+import {validPaymentWeeks} from '@/lib/monthly-payment';
+export const dynamic='force-dynamic';
+const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const datePattern=/^\d{4}-\d{2}-\d{2}$/;
+async function authorized(){const user=await getChatGPTUser();return !!user&&isCoach(user)}
+export async function GET(){if(!await authorized())return Response.json({error:'Acceso restringido.'},{status:403});try{const result=await database().prepare('SELECT email, user_id, name, phone, plan, status, billing, duration_weeks, sessions_per_week, start_date, next_payment_date, next_checkin_date, first_plan_due_date, notes, created_at FROM student_enrollments ORDER BY created_at DESC LIMIT 300').all();return Response.json({students:result.results},{headers:{'Cache-Control':'private, no-store'}})}catch(e){console.error('Enrollment read failed',e);return Response.json({error:'No se pudo cargar el registro.'},{status:503})}}
+export async function POST(request:Request){if(!await authorized())return Response.json({error:'Acceso restringido.'},{status:403});try{
+ const input=await request.json() as Record<string,unknown>;
+ const email=String(input.email||'').trim().toLowerCase(),name=String(input.name||'').trim(),phone=String(input.phone||'').trim(),notes=String(input.notes||'').trim();
+ const plan=String(input.plan||''),status=String(input.status||''),billing=String(input.billing||'');
+ const startDate=String(input.startDate||''),nextPaymentDate=String(input.nextPaymentDate||''),nextCheckinDate=String(input.nextCheckinDate||''),firstPlanDueDate=String(input.firstPlanDueDate||''),durationWeeks=Number(input.durationWeeks),sessionsPerWeek=Number(input.sessionsPerWeek);
+ if(!emailPattern.test(email)||email.length>254||name.length<2||name.length>100||phone.length>30||notes.length>1000||!validPaymentWeeks(durationWeeks)||!Number.isInteger(sessionsPerWeek)||sessionsPerWeek<1||sessionsPerWeek>5||!['online','presencial'].includes(plan)||!['invited','active','paused'].includes(status)||!['pending','manual'].includes(billing)||startDate&&(!datePattern.test(startDate)||!Number.isFinite(Date.parse(startDate)))||nextPaymentDate&&(!datePattern.test(nextPaymentDate)||!Number.isFinite(Date.parse(nextPaymentDate)))||nextCheckinDate&&(!datePattern.test(nextCheckinDate)||!Number.isFinite(Date.parse(nextCheckinDate)))||firstPlanDueDate&&(!datePattern.test(firstPlanDueDate)||!Number.isFinite(Date.parse(firstPlanDueDate))))return Response.json({error:'Revisa los datos del alumno, las semanas, sesiones y fechas.'},{status:400});
+ const db=database(),now=new Date().toISOString();
+ const existing=await db.prepare('SELECT email FROM student_enrollments WHERE email = ?').bind(email).first();
+ if(existing)return Response.json({error:'Este correo ya está registrado. Actualiza su ficha desde la lista.'},{status:409});
+ await db.prepare('INSERT INTO student_enrollments (email,user_id,name,phone,plan,status,billing,duration_weeks,sessions_per_week,start_date,next_payment_date,next_checkin_date,first_plan_due_date,notes,created_at,updated_at) VALUES (?,NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(email,name,phone,plan,status,billing,durationWeeks,sessionsPerWeek,startDate||null,nextPaymentDate||null,nextCheckinDate||null,firstPlanDueDate||null,notes,now,now).run();
+ return Response.json({saved:true});
+ }catch(e){console.error('Enrollment create failed',e);return Response.json({error:'No se pudo registrar al alumno.'},{status:503})}}
+export async function PATCH(request:Request){if(!await authorized())return Response.json({error:'Acceso restringido.'},{status:403});try{
+ const input=await request.json() as Record<string,unknown>,email=String(input.email||'').trim().toLowerCase();
+ const name=String(input.name||'').trim(),phone=String(input.phone||'').trim(),plan=String(input.plan||''),notes=String(input.notes||'').trim(),startDate=String(input.startDate||'');
+ const status=String(input.status||''),billing=String(input.billing||''),nextPaymentDate=String(input.nextPaymentDate||''),nextCheckinDate=String(input.nextCheckinDate||''),firstPlanDueDate=String(input.firstPlanDueDate||''),durationWeeks=Number(input.durationWeeks),sessionsPerWeek=Number(input.sessionsPerWeek);
+ if(name.length<2||name.length>100||phone.length>30||notes.length>1000||!['online','presencial'].includes(plan)||startDate&&(!datePattern.test(startDate)||!Number.isFinite(Date.parse(startDate)))||!emailPattern.test(email)||!validPaymentWeeks(durationWeeks)||!Number.isInteger(sessionsPerWeek)||sessionsPerWeek<1||sessionsPerWeek>5||!['invited','active','paused'].includes(status)||!['pending','manual'].includes(billing)||nextPaymentDate&&(!datePattern.test(nextPaymentDate)||!Number.isFinite(Date.parse(nextPaymentDate)))||nextCheckinDate&&(!datePattern.test(nextCheckinDate)||!Number.isFinite(Date.parse(nextCheckinDate)))||firstPlanDueDate&&(!datePattern.test(firstPlanDueDate)||!Number.isFinite(Date.parse(firstPlanDueDate))))return Response.json({error:'Datos inválidos.'},{status:400});
+ const result=await database().prepare('UPDATE student_enrollments SET name=?,phone=?,plan=?,notes=?,start_date=?,status=?, billing=?, duration_weeks=?, sessions_per_week=?, next_payment_date=?, next_checkin_date=?, first_plan_due_date=?, updated_at=? WHERE email=?').bind(name,phone,plan,notes,startDate||null,status,billing,durationWeeks,sessionsPerWeek,nextPaymentDate||null,nextCheckinDate||null,firstPlanDueDate||null,new Date().toISOString(),email).run();
+ return Response.json({saved:!!result.meta.changes});
+ }catch(e){console.error('Enrollment update failed',e);return Response.json({error:'No se pudo actualizar la ficha.'},{status:503})}}

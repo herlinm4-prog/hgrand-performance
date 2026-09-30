@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /checkout
+Disallow: /acceso
+Disallow: /cuenta
+Disallow: /admin
+Disallow: /api/
+Sitemap: https://www.hgrandperformance.com/sitemap.xml

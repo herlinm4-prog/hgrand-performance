@@ -1,0 +1,18 @@
+import type {Metadata} from "next";
+export const metadata:Metadata={title:{absolute:"Accede a tu espacio HGrand | HGrand Fitness & Performance"},robots:{index:false,follow:false},alternates:{canonical:"/acceso"},openGraph:{url:"/acceso",title:"Accede a tu espacio HGrand",description:"Continúa tu proceso con HGrand Fitness & Performance.",images:["/og-home.jpg"]},twitter:{card:"summary_large_image",title:"Accede a tu espacio HGrand",images:["/og-home.jpg"]}};
+import PlanPrice from '@/app/plan-price';
+import {Header,Footer} from '@/app/site-shell';
+import {getChatGPTUser,chatGPTSignInPath,chatGPTSignOutPath} from '@/app/chatgpt-auth';
+import {getCatalog} from '@/lib/cms';
+import {planKey} from '@/lib/plans';
+import {quotePlan} from '@/lib/checkout';
+import {getLaunchAvailability} from '@/lib/launch';
+import PresencialSelectionSummary from '@/app/presencial-selection';
+export const dynamic='force-dynamic';
+export default async function Access({searchParams}:{searchParams:Promise<{plan?:string;sessions?:string}>}){
+ const query=await searchParams;const key=planKey(query.plan);const p=key?(await getCatalog())[key]:null;const availability=key?await getLaunchAvailability(key):null;const user=await getChatGPTUser();const sessions=key==='presencial'&&/^[1-5]$/.test(query.sessions||'')?'&sessions='+query.sessions:'';const destination=key?'/checkout?plan='+key+sessions:'/cuenta';
+ let quote:null|Awaited<ReturnType<typeof quotePlan>>=null;
+ if(key==='presencial')try{quote=await quotePlan(key,'',sessions?Number(query.sessions):3)}catch{}
+ const accountDestination='/cuenta'+(key?'?plan='+key+sessions:'');
+ return <><Header account={!!user}/><main className="section wrap access-layout"><div><div className="eyebrow">Tu espacio HGrand</div><h1>Tu siguiente paso,<br/><em>con dirección.</em></h1><p className="lead">Entra a tu espacio o crea tu perfil para continuar con el plan.</p>{p&&<div className="access-choice"><span>Has elegido</span><h2>{p.name}</h2>{key==='presencial'?quote?<PresencialSelectionSummary selection={{sessionsPerWeek:quote.sessionsPerWeek!,sessionCount:quote.sessionCount,trainingCents:quote.trainingCents,supportCents:quote.supportCents,totalCents:quote.totalCents}}/>:<p>Revisa el importe actualizado en el checkout antes de pagar.</p>:<PlanPrice plan={p} availability={availability}/>}<p className="hint">El importe definitivo y la disponibilidad se comprueban antes de pagar.</p><a href={`/planes/${key}`}>Revisar lo que incluye</a></div>}</div><section className="access-card"><span className="eyebrow">{user?'Sesión iniciada':'Bienvenido a HGrand'}</span><h2>{user?'Continuemos.':'Accede a HGrand.'}</h2>{user?<><p>Has accedido como <strong>{user.email}</strong>.</p><a className="btn-dark" href={destination}>Continuar ↗</a><a className="secondary-link" href={chatGPTSignOutPath('/acceso'+(key?'?plan='+key+sessions:''))} target="_top">Usar otra cuenta</a></>:<><p>Si ya tienes un perfil, entra a tu espacio. Si es tu primera visita, crea uno después de verificar tu identidad.</p><a className="btn-dark" href={chatGPTSignInPath(destination)} target="_top">Iniciar sesión ↗</a><a className="btn-line access-register" href={chatGPTSignInPath(accountDestination)} target="_top">Crear cuenta ↗</a><p className="hint">Ambas opciones verifican tu identidad; en la primera visita completarás tu perfil. Usa el mismo correo que recibió tu propuesta.</p></>}<p className="hint">Iniciar sesión no realiza ningún cobro.</p><p className="hint">Puedes consultar nuestros <a href="/legal/condiciones">términos de uso</a> y la <a href="/legal/privacidad">política de privacidad</a>.</p><a className="secondary-link" href="/#plan">Seguir explorando los planes</a></section></main><Footer/></>
+}
