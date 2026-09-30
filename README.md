@@ -1,7 +1,15 @@
-# HGrand Performance
+# HGrand Fitness & Performance
 
-Repositorio oficial de HGrand Fitness & Performance.
+La fuente completa recuperada de Sites está en [`site/`](site/). Lee primero [HGRAND_MASTER_CONTEXT.md](HGRAND_MASTER_CONTEXT.md) y [operación de Alertas](site/docs/ADMIN_ALERTAS_OPERACION.md).
 
-**Para continuar el proyecto en Work:** lee primero [la memoria maestra](docs/MEMORIA_MAESTRA_HGRAND.md). Contiene decisiones, enlaces, precios, portal del alumno, CMS, Stripe, códigos de descuento y el estado de pruebas frente a producción.
+El sitio publicado sigue alojado en Sites: https://hgrandperformance.com. Esta rama prepara la integración de H GRAND ALERTAS; no modifica la publicación actual ni la base de producción.
 
-La web pública reside en Sites y usa https://hgrandperformance.com. Este repositorio todavía no es una copia verificada de su código. La memoria explica los pasos para sincronizar las fuentes antes de desarrollar o publicar cambios.
+## Estructura
+- `site/`: copia verificable de la fuente real de Sites, con la integración propuesta y pruebas. Ejecutar instalaciones, pruebas y build desde este directorio.
+- `app/`, `cms/` y `package.json` de la raíz: prototipo histórico de CMS local, conservado para no destruir trabajo previo. **No es el CMS de producción y no debe desplegarse como sustituto del sitio.**
+- `docs/MEMORIA_MAESTRA_HGRAND.md`: memoria histórica; las decisiones actuales y los pagos únicos se documentan en HGRAND_MASTER_CONTEXT.md.
+
+## Validación
+Desde `site/`, instalar con el `pnpm-lock.yaml` existente y ejecutar `pnpm test:admin`, `pnpm exec tsc --noEmit` y `pnpm build`.
+
+La acción de GitHub ejecuta estas verificaciones sin desplegar. No colocar claves Stripe, VAPID, tokens o datos reales de alumnos en el repositorio.

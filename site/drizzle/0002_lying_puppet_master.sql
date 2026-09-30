@@ -1,0 +1,2 @@
+CREATE INDEX `idx_student_files_student_created` ON `student_files` (`student_id`,`created_at`);--> statement-breakpoint
+CREATE INDEX `idx_student_messages_student_created` ON `student_messages` (`student_id`,`created_at`);
