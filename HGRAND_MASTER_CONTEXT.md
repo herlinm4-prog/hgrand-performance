@@ -44,7 +44,7 @@ Auditoría completada del código fuente. Cambios preparados en fuente; NO publi
 - PWA/push: código preparado; claves VAPID, trabajo programado, permisos e iPhone real pendientes. No se enviaron avisos reales.
 - Suscripciones automáticas: PENDIENTE, el producto conserva pago único/manual. No inventar que existen.
 - Historial de actividad: historial de alertas y fuentes existentes; auditoría global de todas las acciones del CMS pendiente.
-- TypeScript completo sin errores con las versiones fijadas; compilación Worker y prueba visual en móvil/escritorio pendientes de cerrar antes de publicar.
+- Instalación con lockfile, 17 pruebas, TypeScript y build de producción aprobados en GitHub Actions (ejecución 36657775992). La prueba visual en móvil/escritorio sigue pendiente antes de desplegar.
 
 ### Validación
-17 pruebas de reglas/handlers pasaron con SQLite en memoria y migraciones reales. Incluyen permisos, aislamiento entre alumnos, deduplicación, idempotencia, vencimientos de Miami, revisión y webhook firmado de fallo. Ver `docs/ADMIN_ALERTAS_OPERACION.md` para operación y límites. Actualizar el resultado final de build/TypeScript antes de publicar.
+17 pruebas de reglas/handlers pasaron con SQLite en memoria y migraciones reales. Incluyen permisos, aislamiento entre alumnos, deduplicación, idempotencia, vencimientos de Miami, revisión y webhook firmado de fallo. Ver `docs/ADMIN_ALERTAS_OPERACION.md` para operación y límites. Validación completa: https://github.com/herlinm4-prog/hgrand-performance/actions/runs/36657775992. Código publicado para revisión en PR #1; no desplegado en producción.
