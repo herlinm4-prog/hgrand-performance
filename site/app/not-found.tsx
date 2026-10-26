@@ -1,0 +1,2 @@
+import {Header,Footer} from "./site-shell";
+export default function NotFound(){return <><Header/><main className="section wrap legal"><div className="eyebrow">HGrand · Página no encontrada</div><h1>Esta página no existe.</h1><p>Vuelve al inicio para explorar nuestros planes o escríbenos si necesitas ayuda.</p><a className="btn-dark" href="/">Volver al inicio ↗</a> <a className="btn-line" href="https://wa.me/17868189448" target="_blank" rel="noreferrer">Hablar por WhatsApp ↗</a></main><Footer/></>}

@@ -1,0 +1,4 @@
+import type {Metadata} from "next";
+import {Header,Footer} from "@/app/site-shell";
+export const metadata:Metadata={robots:{index:false,follow:false},title:"Artículos de entrenamiento y nutrición",description:"Artículos de HGrand Fitness & Performance sobre preparación física, entrenamiento y nutrición.",alternates:{canonical:"/blog"},openGraph:{url:"/blog",title:"Artículos de entrenamiento y nutrición | HGrand",description:"Recursos de entrenamiento, hábitos y nutrición de Herlin Miranda.",images:["/og-home.jpg"]},twitter:{card:"summary_large_image",images:["/og-home.jpg"]}};
+export default function Blog(){return <><Header/><main className="section wrap legal"><div className="eyebrow">HGrand · Recursos</div><h1>Artículos de entrenamiento y nutrición</h1><p>Próximamente publicaremos guías de preparación física, hábitos y entrenamiento con Herlin Miranda.</p></main><Footer/></>}
